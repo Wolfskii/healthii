@@ -1,0 +1,60 @@
+version: 3
+
+dotenv: ['.env']
+
+vars:
+  DATABASE_URL: '{{.DATABASE_URL | default "postgres://healthii:healthii@localhost:5433/healthii"}}'
+
+tasks:
+  setup:
+    desc: Install JavaScript workspace dependencies
+    cmds:
+      - npm install
+
+  db:
+    desc: Start PostgreSQL and MinIO
+    cmds:
+      - docker compose -f docker-compose.dev.yml up -d postgres minio
+
+  db:stop:
+    desc: Stop development containers
+    cmds:
+      - docker compose -f docker-compose.dev.yml stop
+
+  backend:
+    desc: Run the Rust API
+    cmds:
+      - cargo run -p healthii-backend
+
+  web:
+    desc: Run the React web app
+    cmds:
+      - npm run dev -w @healthii/web
+
+  desktop:
+    desc: Run the Tauri desktop app
+    cmds:
+      - npm run tauri:dev -w @healthii/desktop
+
+  mobile:
+    desc: Start the Expo mobile companion
+    cmds:
+      - npm run start -w @healthii/mobile
+
+  test:
+    desc: Run backend and frontend tests
+    cmds:
+      - cargo test -p healthii-backend
+      - npm test
+
+  lint:
+    desc: Format check and clippy
+    cmds:
+      - cargo fmt --all -- --check
+      - cargo clippy -p healthii-backend --all-targets -- -D warnings
+      - npm run typecheck
+
+  migrate:
+    desc: Apply SQLx migrations
+    cmds:
+      - cargo sqlx migrate run --source backend/migrations --database-url {{.DATABASE_URL}}

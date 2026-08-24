@@ -1,0 +1,73 @@
+# Secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editors
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+
+# Rust
+/target/
+backend/target/
+desktop/src-tauri/target/
+**/*.rs.bk
+*.pdb
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Builds
+dist/
+build/
+web/dist/
+desktop/dist/
+mobile/dist/
+mobile/.expo/
+mobile/web-build/
+mobile/android/
+mobile/ios/
+*.tsbuildinfo
+
+# Coverage / test
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# Storage / data
+data/
+storage/
+*.sqlite
+*.sqlite-journal
+
+# Tauri
+desktop/src-tauri/WixTools/
+desktop/src-tauri/target/
+
+# SQLX offline (generated)
+.sqlx/
+
+# Logs
+logs/
+*.log
+
+# Misc
+.turbo/
+.cache/
+.eslintcache

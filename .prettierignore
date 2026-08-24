@@ -1,0 +1,11 @@
+node_modules
+dist
+build
+coverage
+target
+data
+storage
+.next
+.expo
+*.tsbuildinfo
+package-lock.json

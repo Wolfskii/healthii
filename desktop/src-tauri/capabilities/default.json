@@ -1,0 +1,10 @@
+{
+  "identifier": "default",
+  "description": "Healthii desktop capabilities",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:path:default",
+    "opener:default"
+  ]
+}

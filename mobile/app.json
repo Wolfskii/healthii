@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Healthii",
+    "slug": "healthii",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "healthii",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.healthii.mobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Healthii uses the camera to capture medical documents you choose to store.",
+        "NSPhotoLibraryUsageDescription": "Healthii uses your photo library when you attach a document.",
+        "NSHealthShareUsageDescription": "Healthii can import measurements you choose to share from Apple Health.",
+        "NSHealthUpdateUsageDescription": "Healthii can write measurements you choose to save in Apple Health."
+      }
+    },
+    "android": {
+      "package": "app.healthii.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#2C6B5A"
+      }
+    },
+    "plugins": [],
+    "extra": {
+      "healthIntegrations": {
+        "appleHealthKit": "planned",
+        "androidHealthConnect": "planned",
+        "withings": "planned-backend-oauth"
+      }
+    }
+  }
+}

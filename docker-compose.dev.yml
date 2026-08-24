@@ -1,0 +1,69 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-healthii}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-healthii}
+      POSTGRES_DB: ${POSTGRES_DB:-healthii}
+    volumes:
+      - healthii-dev-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-healthii} -d ${POSTGRES_DB:-healthii}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-healthii}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-healthii-dev-secret}
+    volumes:
+      - healthii-dev-minio:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8080
+      DATABASE_URL: postgres://${POSTGRES_USER:-healthii}:${POSTGRES_PASSWORD:-healthii}@postgres:5432/${POSTGRES_DB:-healthii}
+      JWT_SECRET: ${JWT_SECRET:-change-me-to-a-long-random-secret-at-least-32-chars}
+      SESSION_SECRET: ${SESSION_SECRET:-change-me-to-another-long-random-secret-32ch}
+      RUST_LOG: ${RUST_LOG:-healthii_backend=debug,tower_http=info,sqlx=warn}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:1420,http://127.0.0.1:5173}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      STORAGE_PATH: /data/storage
+      OPENAPI_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    volumes:
+      - healthii-dev-storage:/data/storage
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  healthii-dev-postgres:
+  healthii-dev-minio:
+  healthii-dev-storage:

@@ -1,0 +1,46 @@
+name: Backend
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  push:
+    paths:
+      - "backend/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/backend.yml"
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: healthii
+          POSTGRES_PASSWORD: healthii
+          POSTGRES_DB: healthii
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U healthii -d healthii"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://healthii:healthii@localhost:5432/healthii
+      CARGO_TERM_COLOR: always
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy -p healthii-backend --all-targets -- -D warnings
+      - name: Test
+        run: cargo test -p healthii-backend

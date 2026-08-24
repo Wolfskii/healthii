@@ -1,0 +1,34 @@
+{
+  "name": "healthii",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Privacy-first personal health platform",
+  "workspaces": [
+    "packages/*",
+    "web",
+    "desktop",
+    "mobile"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev -w @healthii/web",
+    "dev:desktop": "npm run tauri:dev -w @healthii/desktop",
+    "dev:mobile": "npm run start -w @healthii/mobile",
+    "dev:backend": "cargo run -p healthii-backend",
+    "build:web": "npm run build -w @healthii/web",
+    "build:desktop": "npm run tauri:build -w @healthii/desktop",
+    "build:mobile": "npm run export -w @healthii/mobile",
+    "test": "npm run test --workspaces --if-present",
+    "test:web": "npm run test -w @healthii/web",
+    "test:ui": "npm run test -w @healthii/ui",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

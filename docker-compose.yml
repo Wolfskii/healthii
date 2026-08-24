@@ -1,0 +1,68 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-healthii}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-healthii}
+      POSTGRES_DB: ${POSTGRES_DB:-healthii}
+    volumes:
+      - healthii-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-healthii} -d ${POSTGRES_DB:-healthii}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-healthii}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-healthii-dev-secret}
+    volumes:
+      - healthii-minio:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8080
+      DATABASE_URL: postgres://${POSTGRES_USER:-healthii}:${POSTGRES_PASSWORD:-healthii}@postgres:5432/${POSTGRES_DB:-healthii}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      SESSION_SECRET: ${SESSION_SECRET:-}
+      RUST_LOG: ${RUST_LOG:-info}
+      RUST_LOG_FORMAT: json
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-s3}
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET: ${S3_BUCKET:-healthii-documents}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-healthii}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-healthii-dev-secret}
+      S3_ALLOW_HTTP: "true"
+      OPENAPI_ENABLED: "false"
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+volumes:
+  healthii-postgres:
+  healthii-minio:

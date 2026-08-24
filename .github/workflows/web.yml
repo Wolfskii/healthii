@@ -1,0 +1,27 @@
+name: Web
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  push:
+    paths:
+      - "web/**"
+      - "packages/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/web.yml"
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck -w @healthii/web
+      - run: npm run test -w @healthii/ui
+      - run: npm run test -w @healthii/web
+      - run: npm run build -w @healthii/web

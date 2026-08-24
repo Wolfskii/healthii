@@ -1,0 +1,22 @@
+pub mod api;
+pub mod appointments;
+pub mod auth;
+pub mod config;
+pub mod dashboard;
+pub mod db;
+pub mod documents;
+pub mod error;
+pub mod health;
+pub mod laboratory;
+pub mod measurements;
+pub mod medications;
+pub mod state;
+pub mod storage;
+pub mod symptoms;
+pub mod telemetry;
+pub mod users;
+pub mod workouts;
+
+pub use config::Config;
+pub use error::{AppError, ErrorBody};
+pub use state::AppState;
