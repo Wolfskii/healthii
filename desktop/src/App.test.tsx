@@ -3,9 +3,8 @@ import { describe, expect, it } from "vitest";
 import { App } from "./App";
 
 describe("desktop shell", () => {
-  it("renders primary Healthii navigation", () => {
+  it("asks the user to sign in before showing records", () => {
     render(<App />);
-    expect(screen.getByRole("navigation", { name: "Health sections" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /what is going on with your health/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument();
   });
 });

@@ -149,10 +149,10 @@ Build the production Docker image:
 docker build -f docker/backend.Dockerfile -t healthii-backend:local .
 ```
 
-Start production compose (requires a real `.env` with `JWT_SECRET`):
+Start production compose (prebuilt image; requires secrets):
 
 ```bash
-docker compose up --build -d
+docker compose -f docker-compose.prod.yml up -d
 ```
 
 Stop services:
@@ -189,40 +189,41 @@ cargo clean
 
 ## Health Data
 
-- [ ] Measurements
-- [ ] Weight tracking
-- [ ] Blood pressure
-- [ ] Blood tests
-- [ ] Documents
-- [ ] Workouts
-- [ ] Medications
-- [ ] Symptoms
-- [ ] Appointments
+- [x] Measurements
+- [x] Weight tracking
+- [x] Blood pressure
+- [x] Blood tests
+- [x] Documents
+- [x] Workouts
+- [x] Medications
+- [x] Symptoms
+- [x] Appointments
+- [x] Health notes
+- [x] Sleep
 
 ## Dashboard
 
 - [x] Health overview (shell)
 - [x] Timeline (shell)
-- [ ] Charts
-- [ ] Trends
+- [x] Charts
+- [x] Trends
 
 ## Security
 
 - [x] Authentication hardening (Argon2, JWT sessions, rate limit on login)
 - [x] Authorization (session-scoped user, unauthenticated `/me` rejected)
-- [ ] File security
+- [x] File security
 - [x] Audit logging (table in place; event writes expand with domain routes)
-- [x] Security tests (unauthenticated access; revoked session)
+- [x] Security tests (unauthenticated access; revoked session; cross-user isolation)
 
 ## Deployment
 
 - [x] Docker
 - [x] CI
-- [ ] CD
-- [ ] Production environment
+- [x] CD
+- [x] Production environment
 
 ## Next coherent slice
 
-1. User-scoped generic measurements (weight first).
-2. Live dashboard widgets and timeline from the API.
-3. Laboratory panels with flexible biomarkers.
+1. Live HealthKit / Health Connect / Withings adapters (file import is in).
+2. Local-first sync for the desktop sidecar.

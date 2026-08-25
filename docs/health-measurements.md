@@ -1,6 +1,6 @@
 # Health measurements
 
-A single `measurements` table (Phase 2) with a `type` discriminator so new vitals do not need new tables.
+A single `measurements` table with a `type` discriminator so new vitals do not need new tables.
 
 Each row: `id`, `user_id`, `type`, `value`, `unit`, `measured_at`, `source`, `notes`, timestamps.
 

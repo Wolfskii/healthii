@@ -14,12 +14,14 @@ describe("Button", () => {
 });
 
 describe("DashboardView", () => {
-  it("does not present sample layout as personal health data", () => {
-    render(<DashboardView />);
-    expect(screen.getByRole("status")).toHaveTextContent("not showing personal health data");
-    expect(
-      screen.getByText(/does not provide medical diagnosis/i),
-    ).toBeInTheDocument();
+  it("states that Healthii is not a diagnosis", () => {
+    render(
+      <MemoryRouter>
+        <DashboardView />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("heading", { name: /what is going on with your health/i })).toBeInTheDocument();
+    expect(screen.getByText(/does not provide medical diagnosis/i)).toBeInTheDocument();
   });
 });
 
@@ -34,7 +36,8 @@ describe("AppShell", () => {
         </MemoryRouter>
       </ThemeProvider>,
     );
-    expect(screen.getByRole("navigation", { name: "Health sections" })).toBeInTheDocument();
+    expect(screen.getAllByRole("navigation", { name: "Health sections" }).length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "Skip to content" })).toBeInTheDocument();
+    expect(screen.getByRole("search")).toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 # Roadmap
 
-## Phase 1 — Foundation (current)
+## Phase 1 — Foundation
 
 Repository, Rust API, PostgreSQL, Docker, authentication, React desktop/web shells, Expo mobile shell, CI, documentation.
 
@@ -16,9 +16,13 @@ Lab tests, biomarkers, reference ranges, documents and authorized file access.
 
 Workouts, medications, symptoms, appointments.
 
-## Phase 5 — Advanced
+## Phase 5 — Charts and export
 
-Charts, reports, CSV/JSON/PDF export, import (CSV, JSON, Apple Health, Health Connect), local-first sync, Withings OAuth on the backend.
+Charts, trends, JSON/CSV export, print/PDF, search, live clients, JSON/CSV import.
+
+## Phase 6 — Advanced (current)
+
+Import from Apple Health / Health Connect, local-first sync, Withings OAuth on the backend. CD publishes the API image to GHCR; `docker-compose.prod.yml` is the self-hosted production stack.
 
 ## Localization
 

@@ -1,8 +1,14 @@
 export { AppShell } from "./AppShell";
+export { AuthScreen } from "./AuthScreen";
 export { Button } from "./Button";
 export { DashboardView } from "./DashboardView";
 export { Disclaimer } from "./Disclaimer";
+export { HealthiiApp } from "./HealthiiApp";
 export { Logo } from "./Logo";
 export { PlaceholderPage } from "./PlaceholderPage";
 export { QuickAdd } from "./QuickAdd";
+export { SessionProvider, useOptionalSession, useSession } from "./session";
+export { Sparkline } from "./Sparkline";
 export { ThemeProvider, useTheme } from "./ThemeProvider";
+export { ThemeSwitch } from "./ThemeSwitch";
+export * from "./pages";

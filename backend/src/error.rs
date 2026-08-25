@@ -47,6 +47,14 @@ impl AppError {
         Self::Conflict(message.into())
     }
 
+    pub fn not_found(message: impl Into<String>) -> Self {
+        Self::NotFound(message.into())
+    }
+
+    pub fn forbidden(message: impl Into<String>) -> Self {
+        Self::Forbidden(message.into())
+    }
+
     pub fn internal(message: impl Into<String>) -> Self {
         Self::Internal(message.into())
     }

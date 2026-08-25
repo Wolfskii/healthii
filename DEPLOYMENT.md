@@ -25,7 +25,7 @@ Run Postgres 16+. The backend applies SQLx migrations on startup. Take logical b
 
 ## Storage
 
-Use S3-compatible storage in production (or a dedicated encrypted volume for `local`). Bucket policies must deny public listing. Document download URLs must be authorized in application code (not yet exposed).
+Use S3-compatible storage in production (or a dedicated encrypted volume for `local`). Bucket policies must deny public listing. `GET /api/v1/documents/{id}/file` is authorized in application code.
 
 ## Reverse proxy and HTTPS
 
@@ -66,6 +66,16 @@ cargo sqlx migrate run --source backend/migrations --database-url "$DATABASE_URL
 - Readiness: `GET /ready` (Postgres)
 - Compose and Kubernetes should use these endpoints
 
+## Production compose
+
+```bash
+export JWT_SECRET=... SESSION_SECRET=... POSTGRES_PASSWORD=... MINIO_ROOT_PASSWORD=... CORS_ORIGINS=https://app.example.com
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+```
+
+Override the image with `HEALTHII_IMAGE=ghcr.io/<org>/healthii-backend:v0.3.0`. Do not publish Postgres ports. Point a reverse proxy at port 8080.
+
 ## Release workflow
 
-GitHub Actions `release.yml` builds, tests, tags and can push to GHCR using repository secrets (`GHCR_TOKEN` or `GITHUB_TOKEN`). Wire the actual production host when one exists.
+Push to `develop` or tag `v*` — `docker.yml` / `release.yml` publish to GHCR when `GITHUB_TOKEN` can write packages. Pull that tag on the host. Wire DNS and TLS at the reverse proxy.

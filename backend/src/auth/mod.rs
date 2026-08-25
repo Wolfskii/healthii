@@ -81,10 +81,7 @@ pub async fn register(
     Json(body): Json<RegisterRequest>,
 ) -> Result<(StatusCode, Response), AppError> {
     let email = normalize_email(&body.email)?;
-    let display_name = body.display_name.trim();
-    if display_name.is_empty() || display_name.len() > 120 {
-        return Err(AppError::validation("Display name is required"));
-    }
+    let display_name = crate::users::validate_display_name(&body.display_name)?;
     validate_password(&body.password)?;
 
     let existing = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM users WHERE email = $1")
@@ -111,7 +108,14 @@ pub async fn register(
     .fetch_one(&state.pool)
     .await?;
 
+    sqlx::query("INSERT INTO profiles (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING")
+        .bind(record.id)
+        .execute(&state.pool)
+        .await?;
+
+    let user_id = record.id;
     let response = issue_session(&state, record, None).await?;
+    crate::audit::record(&state, user_id, "auth.register", Some("user")).await;
     Ok((StatusCode::CREATED, response))
 }
 
@@ -155,7 +159,10 @@ pub async fn login(
         return Err(AppError::unauthorized("Invalid email or password"));
     }
 
-    issue_session(&state, record, headers.get(header::USER_AGENT)).await
+    let user_id = record.id;
+    let response = issue_session(&state, record, headers.get(header::USER_AGENT)).await?;
+    crate::audit::record(&state, user_id, "auth.login", Some("session")).await;
+    Ok(response)
 }
 
 #[utoipa::path(
@@ -174,6 +181,7 @@ pub async fn logout(
             .bind(claims.session_id())
             .execute(&state.pool)
             .await?;
+        crate::audit::record(&state, claims.user_id(), "auth.logout", Some("session")).await;
     }
 
     Ok(StatusCode::NO_CONTENT)
@@ -237,7 +245,7 @@ pub fn normalize_email(email: &str) -> Result<String, AppError> {
     Ok(email)
 }
 
-fn validate_password(password: &str) -> Result<(), AppError> {
+pub(crate) fn validate_password(password: &str) -> Result<(), AppError> {
     if password.len() < MIN_PASSWORD_LENGTH {
         return Err(AppError::validation(format!(
             "Password must be at least {MIN_PASSWORD_LENGTH} characters"
@@ -246,7 +254,7 @@ fn validate_password(password: &str) -> Result<(), AppError> {
     Ok(())
 }
 
-fn hash_password(password: &str) -> Result<String, AppError> {
+pub(crate) fn hash_password(password: &str) -> Result<String, AppError> {
     use argon2::{
         password_hash::{rand_core::OsRng, SaltString},
         Argon2, PasswordHasher,
@@ -259,7 +267,7 @@ fn hash_password(password: &str) -> Result<String, AppError> {
         .map_err(|error| AppError::internal(error.to_string()))
 }
 
-fn verify_password(password: &str, hash: &str) -> Result<bool, AppError> {
+pub(crate) fn verify_password(password: &str, hash: &str) -> Result<bool, AppError> {
     use argon2::{Argon2, PasswordHash, PasswordVerifier};
 
     let parsed = PasswordHash::new(hash).map_err(|error| AppError::internal(error.to_string()))?;

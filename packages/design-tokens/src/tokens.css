@@ -13,6 +13,8 @@
   --hii-danger: #9f2d2d;
   --hii-warning: #b5811a;
   --hii-info: #345c8c;
+  --hii-on-sage: #fffbf4;
+  --hii-overlay: rgba(28, 25, 23, 0.45);
   --hii-shadow: 0 18px 50px rgba(28, 25, 23, 0.08);
   --hii-radius-card: 24px;
   --hii-radius-control: 14px;
@@ -37,6 +39,8 @@
   --hii-danger: #e07070;
   --hii-warning: #e0b25a;
   --hii-info: #8bb4e0;
+  --hii-on-sage: #141210;
+  --hii-overlay: rgba(0, 0, 0, 0.65);
   --hii-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
 }
 

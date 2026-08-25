@@ -15,6 +15,7 @@
     "react-router-dom": "^7.0.0"
   },
   "dependencies": {
+    "@healthii/api-client": "0.1.0",
     "@healthii/dashboard": "0.1.0",
     "@healthii/design-tokens": "0.1.0",
     "@healthii/types": "0.1.0"

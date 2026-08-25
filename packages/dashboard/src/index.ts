@@ -17,6 +17,7 @@ export const desktopNav: NavItem[] = [
   { to: "/documents", label: "Documents", icon: "file" },
   { to: "/medications", label: "Medications", icon: "pill" },
   { to: "/symptoms", label: "Symptoms", icon: "note" },
+  { to: "/notes", label: "Notes", icon: "journal" },
   { to: "/appointments", label: "Appointments", icon: "calendar" },
 ];
 
@@ -44,9 +45,11 @@ export const quickAddActions: QuickAddAction[] = [
   { id: "blood-pressure", label: "Blood pressure", description: "Systolic / diastolic" },
   { id: "heart-rate", label: "Heart rate", description: "Resting or current" },
   { id: "glucose", label: "Blood glucose", description: "Record a reading" },
+  { id: "sleep", label: "Sleep", description: "Hours last night" },
   { id: "workout", label: "Workout", description: "Strength or cardio" },
   { id: "symptom", label: "Symptom", description: "How you feel" },
   { id: "medication", label: "Medication", description: "Dose taken" },
+  { id: "appointment", label: "Appointment", description: "Clinic or lab visit" },
   { id: "lab", label: "Blood test", description: "Add a panel later" },
   { id: "document", label: "Document", description: "PDF or image" },
   { id: "note", label: "Note", description: "A private health note" },
@@ -60,7 +63,8 @@ export type TimelineKind =
   | "workouts"
   | "appointments"
   | "medications"
-  | "symptoms";
+  | "symptoms"
+  | "notes";
 
 export const timelineFilters: { id: TimelineKind; label: string }[] = [
   { id: "all", label: "All" },
@@ -71,6 +75,7 @@ export const timelineFilters: { id: TimelineKind; label: string }[] = [
   { id: "appointments", label: "Appointments" },
   { id: "medications", label: "Medications" },
   { id: "symptoms", label: "Symptoms" },
+  { id: "notes", label: "Notes" },
 ];
 
 export type SampleWidget = {
@@ -86,6 +91,7 @@ export const sampleWidgets: SampleWidget[] = [
   { id: "trend", title: "Weight trend", value: "7 / 30 / 90 day", hint: "Trends appear after a few weigh-ins", sample: true },
   { id: "bp", title: "Blood pressure", value: "—", hint: "Latest reading will show here", sample: true },
   { id: "hr", title: "Resting heart rate", value: "—", hint: "Add a heart-rate sample", sample: true },
+  { id: "sleep", title: "Sleep", value: "—", hint: "Hours slept — not a sleep study", sample: true },
   { id: "labs", title: "Latest blood tests", value: "0 panels", hint: "Laboratory results stay in your archive", sample: true },
   { id: "workouts", title: "Recent workouts", value: "0 this week", hint: "Activity from Healthii or later integrations", sample: true },
   { id: "appointments", title: "Upcoming appointments", value: "None", hint: "Keep clinic visits in one place", sample: true },

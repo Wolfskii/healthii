@@ -29,6 +29,7 @@ Mobile: `npm run dev:mobile`
 All backend variables are listed in `.env.example`. Never commit `.env`.
 
 Vite apps read `VITE_API_BASE_URL` (default `http://localhost:8080`).
+Expo reads `EXPO_PUBLIC_API_BASE_URL` (Android emulator default `http://10.0.2.2:8080`).
 
 ## Tests
 

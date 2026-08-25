@@ -29,7 +29,7 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) and [TASKS.md](TASKS.md) for every command.
 
 ## Status
 
-Phase 1 foundation: repository, API health/readiness, authentication, Docker, three client shells, design system, CI and documentation. Domain records (weight, labs, documents, …) are intentionally not fully implemented yet.
+Health records, live dashboard, charts, notes, sleep, export/import (Apple Health export.xml and Health Connect / Fit CSV), search and authorized document download are implemented. Sign in on web, desktop or the Expo companion against a local API. Live HealthKit / Health Connect / Withings sync is still later work.
 
 ## License
 

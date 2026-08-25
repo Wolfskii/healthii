@@ -2,7 +2,7 @@
 
 Web and desktop share `@healthii/ui`. Mobile reimplements layout with React Native using `@healthii/design-tokens` and `@healthii/dashboard`.
 
-State stays local in Phase 1. When records exist, prefer React Query (or similar) talking only to `@healthii/api-client`.
+State lives in `SessionProvider` (`@healthii/ui`) talking only to `@healthii/api-client`. Mobile uses the same client with Expo `fetch`.
 
 i18n: keep copy in view components or message catalogs, not in calculation helpers.
 
