@@ -2,6 +2,12 @@
 
 Privacy-first personal health management. Your entire health history, organized in one private place.
 
+<p>
+  <a href="https://www.buymeacoffee.com/wolfskii">
+    <img src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=wolfskii&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" alt="Buy me a coffee" />
+  </a>
+</p>
+
 Healthii is a **personal health operating system**, not a fitness tracker and not a clinic EHR. It helps you keep doctor reports, laboratory results, measurements, workouts, medications, symptoms and appointments together — for years.
 
 > Healthii does not provide medical diagnosis or replace professional medical advice.
