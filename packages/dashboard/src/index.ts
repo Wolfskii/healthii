@@ -48,7 +48,7 @@ export const quickAddActions: QuickAddAction[] = [
   { id: "sleep", label: "Sleep", description: "Hours last night" },
   { id: "workout", label: "Workout", description: "Strength or cardio" },
   { id: "symptom", label: "Symptom", description: "How you feel" },
-  { id: "medication", label: "Medication", description: "Dose taken" },
+  { id: "medication", label: "Medication", description: "Start tracking one" },
   { id: "appointment", label: "Appointment", description: "Clinic or lab visit" },
   { id: "lab", label: "Blood test", description: "Add a panel later" },
   { id: "document", label: "Document", description: "PDF or image" },

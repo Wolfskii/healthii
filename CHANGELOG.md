@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Medications can be stopped and resumed (`PUT /medications/{id}`); start date and schedule on the Medications page, split into Current and Stopped
+- `active` on every medication is computed by the server in the account timezone; the dashboard and emergency card share that rule
+- Medication errors (for example an end date before the start date) are shown instead of failing silently
+- Quick add medication asks for a name and dosage instead of claiming to log a dose
+
 ## 0.6.0 — 2026-08-25
 
 - Sleep as a measurement (hours); Apple Health time in bed and Health Connect sleep duration import

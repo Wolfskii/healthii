@@ -101,13 +101,15 @@ All of these ignore any client-supplied `user_id` and filter by the authenticate
 | GET/POST | `/api/v1/workouts` | Sessions and optional exercises |
 | GET/PUT/DELETE | `/api/v1/workouts/{id}` | One workout |
 | GET/POST | `/api/v1/medications` | Medications and supplements |
-| DELETE | `/api/v1/medications/{id}` | |
+| PUT/DELETE | `/api/v1/medications/{id}` | Update (e.g. set `ended_on` to stop) or delete one |
 | GET/POST | `/api/v1/symptoms` | Symptoms |
 | DELETE | `/api/v1/symptoms/{id}` | |
 | GET/POST | `/api/v1/notes` | Private health notes |
 | DELETE | `/api/v1/notes/{id}` | |
 | GET/POST | `/api/v1/appointments` | Clinic visits |
 | DELETE | `/api/v1/appointments/{id}` | |
+
+Medications carry a server-derived `active` flag: started (or no `started_on`) and `ended_on` empty or after today, using the account timezone (UTC if that timezone is not recognised). A medication that ends today is no longer active. `ended_on` before `started_on` is rejected. The dashboard and the emergency card list active medications only.
 
 Document uploads: PDF, PNG, JPEG, WEBP, 15 MB maximum. Downloads require the same session that owns the row.
 

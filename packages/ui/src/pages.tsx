@@ -119,6 +119,7 @@ export function MeasurementsPage() {
   const [diastolic, setDiastolic] = useState("");
   const [filter, setFilter] = useState("all");
   const [measuredAt, setMeasuredAt] = useState("");
+  const { error, run } = useAction();
 
   async function refresh() {
     setRows(await api.listMeasurements());
@@ -129,26 +130,30 @@ export function MeasurementsPage() {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    await api.createMeasurement({
-      type: kind,
-      value: Number(value),
-      unit,
-      measured_at: fromLocalInput(measuredAt),
+    await run(async () => {
+      await api.createMeasurement({
+        type: kind,
+        value: Number(value),
+        unit,
+        measured_at: fromLocalInput(measuredAt),
+      });
+      setValue("");
+      await refresh();
     });
-    setValue("");
-    await refresh();
   }
 
   async function onBloodPressure(event: FormEvent) {
     event.preventDefault();
-    await api.createBloodPressure({
-      systolic: Number(systolic),
-      diastolic: Number(diastolic),
-      measured_at: fromLocalInput(measuredAt),
+    await run(async () => {
+      await api.createBloodPressure({
+        systolic: Number(systolic),
+        diastolic: Number(diastolic),
+        measured_at: fromLocalInput(measuredAt),
+      });
+      setSystolic("");
+      setDiastolic("");
+      await refresh();
     });
-    setSystolic("");
-    setDiastolic("");
-    await refresh();
   }
 
   return (
@@ -210,6 +215,7 @@ export function MeasurementsPage() {
           Save blood pressure
         </Button>
       </form>
+      <ErrorNote error={error} />
       <label className="hii-field">
         Show
         <select value={filter} onChange={(event) => setFilter(event.target.value)}>
@@ -228,7 +234,7 @@ export function MeasurementsPage() {
           id: row.id,
           title: `${row.type.replaceAll("_", " ")} · ${row.value} ${row.unit}`,
           meta: new Date(row.measured_at).toLocaleString(),
-          onDelete: () => api.deleteMeasurement(row.id).then(refresh),
+          onDelete: () => run(() => api.deleteMeasurement(row.id).then(refresh)),
         }))}
       />
     </Page>
@@ -245,6 +251,7 @@ export function LabsPage() {
   const [labUnit, setLabUnit] = useState("nmol/L");
   const [low, setLow] = useState("50");
   const [high, setHigh] = useState("125");
+  const { error, run } = useAction();
 
   async function refresh() {
     setLabs(await api.listLabs());
@@ -255,21 +262,23 @@ export function LabsPage() {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    await api.createLab({
-      tested_on: testedOn,
-      laboratory,
-      results: [
-        {
-          biomarker_code: code,
-          value: Number(labValue),
-          unit: labUnit,
-          reference_low: Number(low),
-          reference_high: Number(high),
-        },
-      ],
+    await run(async () => {
+      await api.createLab({
+        tested_on: testedOn,
+        laboratory,
+        results: [
+          {
+            biomarker_code: code,
+            value: Number(labValue),
+            unit: labUnit,
+            reference_low: low === "" ? null : Number(low),
+            reference_high: high === "" ? null : Number(high),
+          },
+        ],
+      });
+      setLabValue("");
+      await refresh();
     });
-    setLabValue("");
-    await refresh();
   }
 
   return (
@@ -307,6 +316,7 @@ export function LabsPage() {
         </div>
         <Button type="submit">Save panel</Button>
       </form>
+      <ErrorNote error={error} />
       <LabHistory labs={labs} />
       <List
         rows={labs.map((lab) => ({
@@ -322,7 +332,7 @@ export function LabsPage() {
               ))}
             </>
           ),
-          onDelete: () => api.deleteLab(lab.id).then(refresh),
+          onDelete: () => run(() => api.deleteLab(lab.id).then(refresh)),
         }))}
       />
     </Page>
@@ -334,7 +344,7 @@ export function DocumentsPage() {
   const [rows, setRows] = useState<Array<{ id: string; filename: string; title: string | null; document_type: string }>>([]);
   const [title, setTitle] = useState("");
   const [documentType, setDocumentType] = useState("doctor_report");
-  const [error, setError] = useState<string | null>(null);
+  const { error, run } = useAction();
 
   async function refresh() {
     setRows(await api.listDocuments());
@@ -345,29 +355,30 @@ export function DocumentsPage() {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(null);
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     form.set("document_type", documentType);
     if (title) {
       form.set("title", title);
     }
-    try {
+    await run(async () => {
       await api.uploadDocument(form);
       setTitle("");
+      formElement.reset();
       await refresh();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Upload failed");
-    }
+    });
   }
 
-  async function openFile(id: string, filename: string) {
-    const { blob } = await api.downloadDocument(id);
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    link.click();
-    URL.revokeObjectURL(url);
+  function openFile(id: string, filename: string) {
+    return run(async () => {
+      const { blob } = await api.downloadDocument(id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    });
   }
 
   return (
@@ -396,16 +407,16 @@ export function DocumentsPage() {
             <input value={title} onChange={(event) => setTitle(event.target.value)} />
           </label>
         </div>
-        {error ? <p className="hii-error">{error}</p> : null}
         <Button type="submit">Upload</Button>
       </form>
+      <ErrorNote error={error} />
       <List
         rows={rows.map((row) => ({
           id: row.id,
           title: row.title || row.filename,
           meta: row.document_type.replaceAll("_", " "),
           onOpen: () => openFile(row.id, row.filename),
-          onDelete: () => api.deleteDocument(row.id).then(refresh),
+          onDelete: () => run(() => api.deleteDocument(row.id).then(refresh)),
         }))}
       />
     </Page>
@@ -419,6 +430,7 @@ export function WorkoutsPage() {
   const [name, setName] = useState("Squat");
   const [reps, setReps] = useState("5");
   const [weight, setWeight] = useState("100");
+  const { error, run } = useAction();
 
   async function refresh() {
     setRows(await api.listWorkouts());
@@ -429,11 +441,24 @@ export function WorkoutsPage() {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    await api.createWorkout({
-      workout_type: type,
-      exercises: [{ name, sets: [{ repetitions: Number(reps), weight: Number(weight), weight_unit: "kg" }] }],
+    await run(async () => {
+      await api.createWorkout({
+        workout_type: type,
+        exercises: [
+          {
+            name,
+            sets: [
+              {
+                repetitions: reps === "" ? null : Number(reps),
+                weight: weight === "" ? null : Number(weight),
+                weight_unit: "kg",
+              },
+            ],
+          },
+        ],
+      });
+      await refresh();
     });
-    await refresh();
   }
 
   return (
@@ -468,12 +493,13 @@ export function WorkoutsPage() {
         </div>
         <Button type="submit">Save workout</Button>
       </form>
+      <ErrorNote error={error} />
       <List
         rows={rows.map((row) => ({
           id: row.id,
           title: `${row.workout_type} · ${row.exercises.map((exercise) => exercise.name).join(", ") || "Session"}`,
           meta: new Date(row.started_at).toLocaleString(),
-          onDelete: () => api.deleteWorkout(row.id).then(refresh),
+          onDelete: () => run(() => api.deleteWorkout(row.id).then(refresh)),
         }))}
       />
     </Page>
@@ -481,57 +507,149 @@ export function WorkoutsPage() {
 }
 
 export function MedicationsPage() {
-  const { api } = useSession();
-  const [rows, setRows] = useState<Array<{ id: string; name: string; kind: string; dosage: string | null }>>([]);
+  const { api, user } = useSession();
+  const [rows, setRows] = useState<Medication[]>([]);
   const [name, setName] = useState("");
-  const [kind, setKind] = useState("medication");
+  const [kind, setKind] = useState<"medication" | "supplement">("medication");
   const [dosage, setDosage] = useState("");
+  const [schedule, setSchedule] = useState("");
+  const [startedOn, setStartedOn] = useState("");
+  const { error, run } = useAction();
   async function refresh() {
     setRows(await api.listMedications());
   }
   useEffect(() => {
     refresh().catch(() => setRows([]));
   }, [api]);
+
+  function setEnded(row: Medication, endedOn: string | null) {
+    return run(async () => {
+      await api.updateMedication(row.id, {
+        name: row.name,
+        kind: row.kind === "supplement" ? "supplement" : "medication",
+        dosage: row.dosage,
+        schedule: row.schedule,
+        started_on: row.started_on,
+        ended_on: endedOn,
+        notes: row.notes,
+      });
+      await refresh();
+    });
+  }
+
+  const toRow = (row: Medication) => ({
+    id: row.id,
+    title: row.dosage ? `${row.name} · ${row.dosage}` : row.name,
+    meta: medicationMeta(row),
+    actions: row.active
+      ? [{ label: "Stop today", onClick: () => setEnded(row, todayIn(user?.timezone)) }]
+      : row.ended_on
+        ? [{ label: "Resume", onClick: () => setEnded(row, null) }]
+        : [],
+    onDelete: () => run(() => api.deleteMedication(row.id).then(refresh)),
+  });
+  const current = rows.filter((row) => row.active);
+  const other = rows.filter((row) => !row.active);
+
   return (
-    <Page title="Medications" body="Medications and supplements you choose to track.">
+    <Page title="Medications" body="Medications and supplements you choose to track. Stopping one keeps its history.">
       <form
         className="hii-form"
         onSubmit={async (event) => {
           event.preventDefault();
-          await api.createMedication({ name, kind, dosage });
-          setName("");
-          await refresh();
+          await run(async () => {
+            await api.createMedication({
+              name,
+              kind,
+              dosage: dosage || null,
+              schedule: schedule || null,
+              started_on: startedOn || null,
+            });
+            setName("");
+            setDosage("");
+            setSchedule("");
+            setStartedOn("");
+            await refresh();
+          });
         }}
       >
         <div className="hii-form-row">
           <label>
             Name
-            <input value={name} onChange={(event) => setName(event.target.value)} required />
+            <input value={name} onChange={(event) => setName(event.target.value)} required maxLength={160} />
           </label>
           <label>
             Kind
-            <select value={kind} onChange={(event) => setKind(event.target.value)}>
+            <select
+              value={kind}
+              onChange={(event) => setKind(event.target.value === "supplement" ? "supplement" : "medication")}
+            >
               <option value="medication">Medication</option>
               <option value="supplement">Supplement</option>
             </select>
           </label>
           <label>
             Dosage
-            <input value={dosage} onChange={(event) => setDosage(event.target.value)} />
+            <input value={dosage} onChange={(event) => setDosage(event.target.value)} maxLength={80} placeholder="50 mcg" />
+          </label>
+          <label>
+            Schedule
+            <input
+              value={schedule}
+              onChange={(event) => setSchedule(event.target.value)}
+              maxLength={160}
+              placeholder="Every morning"
+            />
+          </label>
+          <label>
+            Started
+            <input type="date" value={startedOn} onChange={(event) => setStartedOn(event.target.value)} />
           </label>
         </div>
+        <p className="hii-hint">Copy dosage and schedule from your prescription — Healthii does not suggest doses.</p>
         <Button type="submit">Save</Button>
       </form>
-      <List
-        rows={rows.map((row) => ({
-          id: row.id,
-          title: row.name,
-          meta: `${row.kind}${row.dosage ? ` · ${row.dosage}` : ""}`,
-          onDelete: () => api.deleteMedication(row.id).then(refresh),
-        }))}
-      />
+      <ErrorNote error={error} />
+      <h2 className="hii-section-title">Current</h2>
+      <List rows={current.map(toRow)} empty="Nothing current." />
+      {other.length > 0 ? (
+        <>
+          <h2 className="hii-section-title">Stopped or not started</h2>
+          <List rows={other.map(toRow)} />
+        </>
+      ) : null}
     </Page>
   );
+}
+
+function medicationMeta(row: Medication): string {
+  const parts = [row.kind === "supplement" ? "Supplement" : "Medication"];
+  if (row.schedule) {
+    parts.push(row.schedule);
+  }
+  if (row.started_on && row.ended_on) {
+    parts.push(`${row.started_on} → ${row.ended_on}`);
+  } else if (row.ended_on) {
+    parts.push(row.active ? `Until ${row.ended_on}` : `Stopped ${row.ended_on}`);
+  } else if (row.started_on) {
+    parts.push(row.active ? `Since ${row.started_on}` : `Starts ${row.started_on}`);
+  }
+  return parts.join(" · ");
+}
+
+/** YYYY-MM-DD in the account timezone, so "today" matches the server's notion of active. */
+export function todayIn(timezone: string | undefined, now = new Date()): string {
+  try {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone || undefined,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(now);
+  } catch {
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60_000);
+    return local.toISOString().slice(0, 10);
+  }
 }
 
 export function SymptomsPage() {
@@ -539,6 +657,7 @@ export function SymptomsPage() {
   const [rows, setRows] = useState<Array<{ id: string; name: string; noted_at: string; severity: number | null }>>([]);
   const [name, setName] = useState("");
   const [severity, setSeverity] = useState("5");
+  const { error, run } = useAction();
   async function refresh() {
     setRows(await api.listSymptoms());
   }
@@ -551,9 +670,11 @@ export function SymptomsPage() {
         className="hii-form"
         onSubmit={async (event) => {
           event.preventDefault();
-          await api.createSymptom({ name, severity: Number(severity) });
-          setName("");
-          await refresh();
+          await run(async () => {
+            await api.createSymptom({ name, severity: severity === "" ? null : Number(severity) });
+            setName("");
+            await refresh();
+          });
         }}
       >
         <div className="hii-form-row">
@@ -568,12 +689,13 @@ export function SymptomsPage() {
         </div>
         <Button type="submit">Save</Button>
       </form>
+      <ErrorNote error={error} />
       <List
         rows={rows.map((row) => ({
           id: row.id,
           title: row.name,
           meta: `${new Date(row.noted_at).toLocaleString()}${row.severity ? ` · ${row.severity}/10` : ""}`,
-          onDelete: () => api.deleteSymptom(row.id).then(refresh),
+          onDelete: () => run(() => api.deleteSymptom(row.id).then(refresh)),
         }))}
       />
     </Page>
@@ -586,6 +708,7 @@ export function NotesPage() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [when, setWhen] = useState("");
+  const { error, run } = useAction();
   async function refresh() {
     setRows(await api.listNotes());
   }
@@ -598,10 +721,12 @@ export function NotesPage() {
         className="hii-form"
         onSubmit={async (event) => {
           event.preventDefault();
-          await api.createNote({ title, body, noted_at: fromLocalInput(when) });
-          setTitle("");
-          setBody("");
-          await refresh();
+          await run(async () => {
+            await api.createNote({ title, body, noted_at: fromLocalInput(when) });
+            setTitle("");
+            setBody("");
+            await refresh();
+          });
         }}
       >
         <div className="hii-form-row">
@@ -620,6 +745,7 @@ export function NotesPage() {
         </label>
         <Button type="submit">Save note</Button>
       </form>
+      <ErrorNote error={error} />
       <List
         rows={rows.map((row) => ({
           id: row.id,
@@ -630,7 +756,7 @@ export function NotesPage() {
               {row.body ? ` · ${row.body}` : ""}
             </>
           ),
-          onDelete: () => api.deleteNote(row.id).then(refresh),
+          onDelete: () => run(() => api.deleteNote(row.id).then(refresh)),
         }))}
       />
     </Page>
@@ -643,6 +769,7 @@ export function AppointmentsPage() {
   const [title, setTitle] = useState("");
   const [starts, setStarts] = useState("");
   const [provider, setProvider] = useState("");
+  const { error, run } = useAction();
   async function refresh() {
     setRows(await api.listAppointments());
   }
@@ -655,13 +782,15 @@ export function AppointmentsPage() {
         className="hii-form"
         onSubmit={async (event) => {
           event.preventDefault();
-          await api.createAppointment({
-            title,
-            starts_at: new Date(starts).toISOString(),
-            provider,
+          await run(async () => {
+            const startsAt = fromLocalInput(starts);
+            if (!startsAt) {
+              throw new Error("Choose a start time");
+            }
+            await api.createAppointment({ title, starts_at: startsAt, provider });
+            setTitle("");
+            await refresh();
           });
-          setTitle("");
-          await refresh();
         }}
       >
         <div className="hii-form-row">
@@ -680,12 +809,13 @@ export function AppointmentsPage() {
         </div>
         <Button type="submit">Save</Button>
       </form>
+      <ErrorNote error={error} />
       <List
         rows={rows.map((row) => ({
           id: row.id,
           title: row.title,
           meta: `${new Date(row.starts_at).toLocaleString()}${row.provider ? ` · ${row.provider}` : ""}`,
-          onDelete: () => api.deleteAppointment(row.id).then(refresh),
+          onDelete: () => run(() => api.deleteAppointment(row.id).then(refresh)),
         }))}
       />
     </Page>
@@ -755,9 +885,14 @@ export function ReportsPage() {
   }, [api]);
 
   async function download(format: "json" | "csv") {
+    setError(null);
     const response = await fetch(`${baseUrl}/api/v1/export?format=${format}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    }).catch(() => null);
+    if (!response?.ok) {
+      setError("Export failed. Check your connection and try again.");
+      return;
+    }
     const blob = await response.blob();
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -850,7 +985,7 @@ function EmergencyCard() {
     Promise.all([api.profile(), api.listMedications()])
       .then(([nextProfile, nextMeds]) => {
         setProfile(nextProfile);
-        setMeds(nextMeds.filter((row) => !row.ended_on));
+        setMeds(nextMeds.filter((row) => row.active));
       })
       .catch(() => undefined);
   }, [api]);
@@ -896,6 +1031,7 @@ export function SettingsPage() {
   const [goalWeight, setGoalWeight] = useState("");
   const [goalUnit, setGoalUnit] = useState("kg");
   const [saved, setSaved] = useState(false);
+  const { error, run } = useAction();
   useEffect(() => {
     api.profile().then((profile) => {
       setHeight(profile.height_cm?.toString() ?? "");
@@ -925,19 +1061,22 @@ export function SettingsPage() {
         className="hii-form"
         onSubmit={async (event) => {
           event.preventDefault();
-          await api.updateProfile({
-            height_cm: height ? Number(height) : null,
-            blood_type: bloodType || null,
-            allergies: allergies || null,
-            medical_history: history || null,
-            emergency_name: emergencyName || null,
-            emergency_phone: emergencyPhone || null,
-            unit_system: unitSystem,
-            weight_unit: weightUnit,
-            goal_weight: goalWeight ? Number(goalWeight) : null,
-            goal_weight_unit: goalWeight ? goalUnit : null,
-          });
-          setSaved(true);
+          setSaved(false);
+          const ok = await run(() =>
+            api.updateProfile({
+              height_cm: height ? Number(height) : null,
+              blood_type: bloodType || null,
+              allergies: allergies || null,
+              medical_history: history || null,
+              emergency_name: emergencyName || null,
+              emergency_phone: emergencyPhone || null,
+              unit_system: unitSystem,
+              weight_unit: weightUnit,
+              goal_weight: goalWeight ? Number(goalWeight) : null,
+              goal_weight_unit: goalWeight ? goalUnit : null,
+            }),
+          );
+          setSaved(ok);
         }}
       >
         <div className="hii-form-row">
@@ -995,6 +1134,7 @@ export function SettingsPage() {
         </div>
         <Button type="submit">Save profile</Button>
         {saved ? <p className="hii-hint">Saved.</p> : null}
+        <ErrorNote error={error} />
       </form>
       </article>
       <div className="hii-split">
@@ -1141,6 +1281,7 @@ function PasswordForm() {
 function SessionsPanel() {
   const { api, setSession } = useSession();
   const [rows, setRows] = useState<SessionInfo[]>([]);
+  const { error, run } = useAction();
   async function refresh() {
     setRows(await api.sessions());
   }
@@ -1161,19 +1302,22 @@ function SessionsPanel() {
           <Button
             variant="secondary"
             type="button"
-            onClick={async () => {
-              await api.revokeSession(row.id);
-              if (row.current) {
-                setSession(null, null);
-              } else {
-                await refresh();
-              }
-            }}
+            onClick={() =>
+              run(async () => {
+                await api.revokeSession(row.id);
+                if (row.current) {
+                  setSession(null, null);
+                } else {
+                  await refresh();
+                }
+              })
+            }
           >
             Revoke
           </Button>
         </div>
       ))}
+      <ErrorNote error={error} />
     </div>
   );
 }
@@ -1254,6 +1398,30 @@ function DeleteAccount() {
   );
 }
 
+/** Runs a save/delete and keeps the server's error message for display instead of an unhandled rejection. */
+function useAction() {
+  const [error, setError] = useState<string | null>(null);
+  async function run(action: () => Promise<unknown>): Promise<boolean> {
+    setError(null);
+    try {
+      await action();
+      return true;
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not save");
+      return false;
+    }
+  }
+  return { error, run };
+}
+
+function ErrorNote({ error }: { error: string | null }) {
+  return error ? (
+    <p className="hii-error" role="alert">
+      {error}
+    </p>
+  ) : null;
+}
+
 function Page({ title, body, children }: { title: string; body: string; children: ReactNode }) {
   return (
     <>
@@ -1271,6 +1439,7 @@ function Page({ title, body, children }: { title: string; body: string; children
 
 function List({
   rows,
+  empty = "Nothing saved yet.",
 }: {
   rows: Array<{
     id: string;
@@ -1278,10 +1447,12 @@ function List({
     meta: ReactNode;
     onDelete: () => void;
     onOpen?: () => void;
+    actions?: Array<{ label: string; onClick: () => void }>;
   }>;
+  empty?: string;
 }) {
   if (rows.length === 0) {
-    return <p className="hii-hint">Nothing saved yet.</p>;
+    return <p className="hii-hint">{empty}</p>;
   }
   return (
     <div className="hii-list">
@@ -1297,13 +1468,54 @@ function List({
                 File
               </Button>
             ) : null}
-            <Button variant="secondary" type="button" onClick={row.onDelete}>
-              Delete
-            </Button>
+            {row.actions?.map((action) => (
+              <Button key={action.label} variant="secondary" type="button" onClick={action.onClick}>
+                {action.label}
+              </Button>
+            ))}
+            <DeleteButton label={row.title} onDelete={row.onDelete} />
           </div>
         </div>
       ))}
     </div>
+  );
+}
+
+/** Two-step delete: health records are not recoverable, and window.confirm is unreliable in the Tauri webview. */
+function DeleteButton({ label, onDelete }: { label: string; onDelete: () => void }) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) {
+      return;
+    }
+    const timer = window.setTimeout(() => setArmed(false), 5000);
+    return () => window.clearTimeout(timer);
+  }, [armed]);
+  if (!armed) {
+    return (
+      <Button variant="secondary" type="button" onClick={() => setArmed(true)} aria-label={`Delete ${label}`}>
+        Delete
+      </Button>
+    );
+  }
+  return (
+    <>
+      <Button
+        variant="secondary"
+        type="button"
+        className="hii-danger"
+        onClick={() => {
+          setArmed(false);
+          onDelete();
+        }}
+        aria-label={`Confirm delete ${label}`}
+      >
+        Confirm delete
+      </Button>
+      <Button variant="secondary" type="button" onClick={() => setArmed(false)}>
+        Keep
+      </Button>
+    </>
   );
 }
 

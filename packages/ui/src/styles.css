@@ -343,6 +343,11 @@ a.hii-card:hover {
   color: var(--hii-ink);
 }
 
+.hii-btn.secondary.hii-danger {
+  border-color: var(--hii-danger);
+  color: var(--hii-danger);
+}
+
 .hii-btn.icon {
   width: 42px;
   padding: 0;

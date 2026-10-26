@@ -3,7 +3,7 @@ use axum::{
     http::{header, request::Parts, HeaderMap, StatusCode},
     Json,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -130,6 +130,18 @@ pub(crate) fn validate_display_name(name: &str) -> Result<String, AppError> {
         return Err(AppError::validation("Display name is required"));
     }
     Ok(name.to_string())
+}
+
+/// Today's date in the user's stored timezone. Falls back to UTC when the
+/// timezone is not one PostgreSQL recognises (validation only checks its shape).
+pub async fn local_today(state: &AppState, user_id: Uuid) -> NaiveDate {
+    sqlx::query_scalar::<_, NaiveDate>(
+        "SELECT (now() AT TIME ZONE timezone)::date FROM users WHERE id = $1",
+    )
+    .bind(user_id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or_else(|_| Utc::now().date_naive())
 }
 
 pub(crate) fn validate_timezone(tz: &str) -> Result<String, AppError> {

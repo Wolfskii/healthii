@@ -136,7 +136,10 @@ fn v1_router() -> Router<AppState> {
             "/medications",
             get(medications::list).post(medications::create),
         )
-        .route("/medications/{id}", delete(medications::delete))
+        .route(
+            "/medications/{id}",
+            put(medications::update).delete(medications::delete),
+        )
         .route("/symptoms", get(symptoms::list).post(symptoms::create))
         .route("/symptoms/{id}", delete(symptoms::delete))
         .route("/notes", get(notes::list).post(notes::create))

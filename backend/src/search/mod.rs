@@ -245,7 +245,7 @@ pub async fn get(
         });
     }
 
-    items.sort_by(|a, b| b.occurred_at.cmp(&a.occurred_at));
+    items.sort_by_key(|item| std::cmp::Reverse(item.occurred_at));
     items.truncate(limit);
     Ok(Json(TimelineResponse { items }))
 }

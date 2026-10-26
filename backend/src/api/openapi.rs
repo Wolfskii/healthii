@@ -45,6 +45,7 @@ use crate::{
         crate::measurements::delete,
         crate::laboratory::list,
         crate::laboratory::create,
+        crate::medications::update,
     ),
     components(schemas(
         HealthResponse,
@@ -62,6 +63,8 @@ use crate::{
         crate::import::ImportResult,
         crate::users::ChangePassword,
         crate::users::UpdateMe,
+        crate::medications::Medication,
+        crate::medications::UpsertMedication,
     )),
     tags(
         (name = "ops", description = "Process health and readiness"),
@@ -70,6 +73,7 @@ use crate::{
         (name = "dashboard", description = "Health overview widgets"),
         (name = "measurements", description = "Vitals and body measurements"),
         (name = "labs", description = "Laboratory panels and biomarkers"),
+        (name = "medications", description = "Medications and supplements"),
     ),
     modifiers(&SecurityAddon)
 )]

@@ -612,3 +612,115 @@ async fn update_me_is_scoped_to_the_caller() {
     assert_eq!(me_b["display_name"], "Tester");
     assert_eq!(me_b["timezone"], "UTC");
 }
+
+#[tokio::test]
+async fn medication_updates_are_scoped_and_stopping_ends_active() {
+    let Some(app) = app().await else {
+        eprintln!("skipping: DATABASE_URL is not set");
+        return;
+    };
+    let suffix = uuid::Uuid::new_v4();
+    let token_a = register(&app, &format!("med-a-{suffix}@healthii.test")).await;
+    let token_b = register(&app, &format!("med-b-{suffix}@healthii.test")).await;
+    let (status, created) = json(
+        &app,
+        "POST",
+        "/api/v1/medications",
+        &token_a,
+        Some(json!({ "name": "Levothyroxine", "dosage": "50 mcg", "started_on": "2026-01-05" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED);
+    assert_eq!(created["active"], json!(true));
+    let id = created["id"].as_str().unwrap();
+    let uri = format!("/api/v1/medications/{id}");
+
+    let (status, _) = json(
+        &app,
+        "PUT",
+        &uri,
+        &token_b,
+        Some(json!({ "name": "Hijacked" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
+
+    let (status, _) = json(
+        &app,
+        "PUT",
+        &uri,
+        &token_a,
+        Some(json!({ "name": "Levothyroxine", "started_on": "2026-01-05", "ended_on": "2026-01-01" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+
+    let today = chrono::Utc::now().date_naive().to_string();
+    let (status, stopped) = json(
+        &app,
+        "PUT",
+        &uri,
+        &token_a,
+        Some(json!({
+            "name": "Levothyroxine",
+            "dosage": "50 mcg",
+            "started_on": "2026-01-05",
+            "ended_on": today
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(stopped["name"], json!("Levothyroxine"));
+    assert_eq!(stopped["active"], json!(false));
+
+    let (status, dashboard) = json(&app, "GET", "/api/v1/dashboard", &token_a, None).await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(!dashboard.to_string().contains("Levothyroxine"));
+}
+
+#[tokio::test]
+async fn medication_active_follows_the_users_timezone() {
+    let Some(app) = app().await else {
+        eprintln!("skipping: DATABASE_URL is not set");
+        return;
+    };
+    let suffix = uuid::Uuid::new_v4();
+    let token = register(&app, &format!("med-tz-{suffix}@healthii.test")).await;
+    // UTC+14: the local date is already "tomorrow" for most of the UTC day.
+    let (status, _) = json(
+        &app,
+        "PUT",
+        "/api/v1/me",
+        &token,
+        Some(json!({ "timezone": "Pacific/Kiritimati" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    let local_today = (chrono::Utc::now() + chrono::Duration::hours(14))
+        .date_naive()
+        .to_string();
+    let (status, created) = json(
+        &app,
+        "POST",
+        "/api/v1/medications",
+        &token,
+        Some(json!({ "name": "Amoxicillin", "ended_on": local_today })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED);
+    assert_eq!(created["active"], json!(false));
+
+    // A well-shaped but unknown timezone falls back to UTC instead of failing.
+    let (status, _) = json(
+        &app,
+        "PUT",
+        "/api/v1/me",
+        &token,
+        Some(json!({ "timezone": "Mars/Olympus_Mons" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    let (status, rows) = json(&app, "GET", "/api/v1/medications", &token, None).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(rows.as_array().unwrap().len(), 1);
+}

@@ -72,15 +72,7 @@ async fn load(state: &AppState, user_id: uuid::Uuid) -> Result<ExportPayload, Ap
         measurements: measurement_rows,
         labs: laboratory::list_for(state, user_id).await?,
         workouts: workouts::recent(state, user_id, 500).await?,
-        medications: sqlx::query_as(
-            r#"
-            SELECT id, user_id, name, kind, dosage, schedule, started_on, ended_on, notes, created_at, updated_at
-            FROM medications WHERE user_id = $1 ORDER BY name
-            "#,
-        )
-        .bind(user_id)
-        .fetch_all(&state.pool)
-        .await?,
+        medications: medications::list_for(state, user_id).await?,
         symptoms: sqlx::query_as(
             r#"
             SELECT id, user_id, name, severity, noted_at, notes, created_at

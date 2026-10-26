@@ -175,6 +175,20 @@ export interface Medication {
   started_on: string | null;
   ended_on: string | null;
   notes: string | null;
+  /** Server-derived: started and not yet ended, in the user's timezone. */
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MedicationInput {
+  name: string;
+  kind?: "medication" | "supplement";
+  dosage?: string | null;
+  schedule?: string | null;
+  started_on?: string | null;
+  ended_on?: string | null;
+  notes?: string | null;
 }
 
 export interface Symptom {

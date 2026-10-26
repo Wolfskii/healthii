@@ -12,6 +12,7 @@ import type {
     SessionInfo,
   Measurement,
   Medication,
+  MedicationInput,
   Note,
   ActivityEvent,
   Profile,
@@ -194,8 +195,10 @@ export function createApiClient(options: ApiClientOptions) {
     deleteWorkout: (id: string) =>
       request<void>(`/api/v1/workouts/${id}`, { method: "DELETE" }),
     listMedications: () => request<Medication[]>("/api/v1/medications"),
-    createMedication: (body: unknown) =>
+    createMedication: (body: MedicationInput) =>
       request<Medication>("/api/v1/medications", { method: "POST", body: JSON.stringify(body) }),
+    updateMedication: (id: string, body: MedicationInput) =>
+      request<Medication>(`/api/v1/medications/${id}`, { method: "PUT", body: JSON.stringify(body) }),
     deleteMedication: (id: string) =>
       request<void>(`/api/v1/medications/${id}`, { method: "DELETE" }),
     listSymptoms: () => request<Symptom[]>("/api/v1/symptoms"),

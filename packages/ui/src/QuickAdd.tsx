@@ -139,7 +139,9 @@ export function QuickAdd({
       ? "Systolic / diastolic"
       : action === "note" || action === "appointment"
         ? "Title"
-        : action === "sleep"
+        : action === "medication"
+          ? "Name"
+          : action === "sleep"
           ? "Hours"
           : "Value";
   const extraLabel =
@@ -149,7 +151,9 @@ export function QuickAdd({
         ? "Type"
         : action === "note"
           ? "Note"
-          : action === "appointment"
+          : action === "medication"
+            ? "Dosage (optional)"
+            : action === "appointment"
             ? "Starts"
             : "Optional";
 
